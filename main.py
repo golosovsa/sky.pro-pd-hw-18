@@ -44,3 +44,38 @@
 #
 # if __name__ == '__main__':
 #     app.run(host="localhost", port=10001, debug=True)
+from flask import Flask
+from flask_restx import Api
+
+from app.config import Config
+from app.views.movies import movies_ns
+from app.views.directors import directors_ns
+from app.views.genres import genres_ns
+
+
+def create_app(config_object: Config) -> Flask:
+    application = Flask(__name__)
+    application.config.from_object(config_object)
+    application.app_context().push()
+    return application
+
+
+def register_extensions(application: Flask):
+    api = Api()
+    api.add_namespace(movies_ns)
+    api.add_namespace(directors_ns)
+    api.add_namespace(genres_ns)
+    api.init_app(application)
+
+
+def fill_data(application: Flask):
+    pass
+
+
+app = create_app(Config())
+register_extensions(app)
+fill_data(app)
+
+if __name__ == "__main__":
+
+    app.run(debug=True)
