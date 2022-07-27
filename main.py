@@ -46,11 +46,17 @@
 #     app.run(host="localhost", port=10001, debug=True)
 from flask import Flask
 from flask_restx import Api
+from sqlalchemy.orm import Session
 
 from app.config import Config
 from app.views.movies import movies_ns
 from app.views.directors import directors_ns
 from app.views.genres import genres_ns
+from app.setup_db import db
+from app.dao.model.movie import Movie
+from app.dao.model.genre import Genre
+from app.dao.model.director import Director
+from app.constants import TEST_DB_DIRECTORS, TEST_DB_GENRES
 
 
 def create_app(config_object: Config) -> Flask:
@@ -61,6 +67,7 @@ def create_app(config_object: Config) -> Flask:
 
 
 def register_extensions(application: Flask):
+    db.init_app(application)
     api = Api()
     api.add_namespace(movies_ns)
     api.add_namespace(directors_ns)
@@ -69,7 +76,17 @@ def register_extensions(application: Flask):
 
 
 def fill_data(application: Flask):
-    pass
+    with application.app_context():
+        db.create_all()
+        db.session.commit()
+
+        session: Session = db.session
+
+        for i in range(TEST_DB_DIRECTORS):
+            session.add(Director(name=f"Test Director {i}"))
+
+        for i in range(TEST_DB_GENRES):
+            session.add(Director(name=f"Test Director {i}"))
 
 
 app = create_app(Config())
