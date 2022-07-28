@@ -1,6 +1,7 @@
 """
     SQLAlchemy movie models
 """
+from marshmallow import Schema, fields
 
 from app.setup_db import db
 
@@ -16,8 +17,8 @@ class Movie(db.Model):
     genre_id = db.Column(db.Integer, db.ForeignKey("genres.id"), nullable=False)
     director_id = db.Column(db.Integer, db.ForeignKey("directors.id"), nullable=False)
 
-    genres = db.relationship("Genre", back_populates="movies")
-    directors = db.relationship("Director", back_populates="movies")
+    genre = db.relationship("Genre", back_populates="movies")
+    director = db.relationship("Director", back_populates="movies")
 
     def __repr__(self):
         return f"Movie(\n" \
@@ -30,3 +31,16 @@ class Movie(db.Model):
                f"    {self.director_id}\n" \
                f")"
 
+
+class MovieSchema(Schema):
+    id = fields.Int()
+    title = fields.Str()
+    description = fields.Str()
+    trailer = fields.Str()
+    year = fields.Int()
+    rating = fields.Float()
+    genre_id = fields.Int()
+    director_id = fields.Int()
+
+    genre = fields.Pluck("GenreSchema", "name")
+    director = fields.Pluck("DirectorSchema", "name")

@@ -1,6 +1,7 @@
 """
     SQLAlchemy Genre model
 """
+from marshmallow import Schema, fields
 
 from app.setup_db import db
 
@@ -14,3 +15,8 @@ class Genre(db.Model):
 
     def __repr__(self):
         return f"Genre({self.id}, '{self.name}')"
+
+
+class GenreSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
