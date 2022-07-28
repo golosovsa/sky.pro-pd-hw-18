@@ -56,7 +56,7 @@ from app.setup_db import db
 from app.dao.model.movie import Movie
 from app.dao.model.genre import Genre
 from app.dao.model.director import Director
-from app.constants import TEST_DB_DIRECTORS, TEST_DB_GENRES
+from app.constants import TEST_MOVIES
 
 
 def create_app(config_object: Config) -> Flask:
@@ -82,11 +82,41 @@ def fill_data(application: Flask):
 
         session: Session = db.session
 
-        for i in range(TEST_DB_DIRECTORS):
-            session.add(Director(name=f"Test Director {i}"))
+        genres = [Genre(name=genre) for genre in set([movie["genre"] for movie in TEST_MOVIES])]
+        directors = [Director(name=director) for director in set([movie["director"] for movie in TEST_MOVIES])]
 
-        for i in range(TEST_DB_GENRES):
-            session.add(Director(name=f"Test Director {i}"))
+        session.add_all(genres)
+        session.add_all(directors)
+
+        session.commit()
+
+        movies = []
+
+        for movie in TEST_MOVIES:
+
+            genre_id = None
+            for genre in genres:
+                if genre.name == movie["genre"]:
+                    genre_id = genre.id
+                    break
+
+            director_id = None
+            for director in directors:
+                if director.name == movie["director"]:
+                    director_id = director.id
+                    break
+
+            del movie["genre"]
+            del movie["director"]
+
+            movies.append(
+                Movie(**movie,
+                      director_id=director_id,
+                      genre_id=genre_id)
+            )
+
+        session.add_all(movies)
+        session.commit()
 
 
 app = create_app(Config())
@@ -94,5 +124,4 @@ register_extensions(app)
 fill_data(app)
 
 if __name__ == "__main__":
-
     app.run(debug=True)

@@ -19,3 +19,14 @@ class Movie(db.Model):
     genres = db.relationship("Genre", back_populates="movies")
     directors = db.relationship("Director", back_populates="movies")
 
+    def __repr__(self):
+        return f"Movie(\n" \
+               f"    '{self.title}',\n" \
+               f"    '{self.description}',\n" \
+               f"    '{self.trailer}',\n" \
+               f"    {self.year},\n" \
+               f"    {self.rating},\n" \
+               f"    {self.genre_id},\n" \
+               f"    {self.director_id}\n" \
+               f")"
+

@@ -10,4 +10,7 @@ class Director(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
 
-    movies = db.Relationship("Movie", back_population="directors")
+    movies = db.relationship("Movie", back_populates="directors")
+
+    def __repr__(self):
+        return f"Director({self.id}, '{self.name}')"
