@@ -12,7 +12,7 @@ class BaseDAO:
     def __init__(self, model_type: type, session: Session):
         self._Model = model_type
         self._session: Session = session
-        self._nested_session: Session = None
+        self._nested_session: Session or None = None
         self._updatable_fields = []
 
     @staticmethod
@@ -24,15 +24,22 @@ class BaseDAO:
         """ Get new query object """
         return self._session.query(self._Model) if not transaction else transaction.query(self._Model)
 
-    def commit_nested(self):
-        self._nested_session.commit()
+    def commit_nested(self, transaction: Session = None):
+        """ Nested commit method """
+        transaction = transaction or self._nested_session
+        transaction.commit()
 
     def create_nested(self, transaction: Session, data: dict):
         """ Nested create model method """
         model = self._Model(**data)
         transaction.add(model)
+        return model
 
-    def read_all_nested(self, query: Query, transaction: Session, limit: int = None, offset: int = None):
+    def read_all_nested(self,
+                        transaction: Session,
+                        query: Query,
+                        limit: int or None = None,
+                        offset: int or None = None):
         """ Nested read all models method """
         query = query or self.get_query(transaction)
 
@@ -49,18 +56,18 @@ class BaseDAO:
         query: Query = self.get_query(transaction)
         return query.get(pk)
 
-    def update_nested(self, transaction: Session, data: dict):
+    def update_nested(self, transaction: Session, pk: int, data: dict):
         """ Nested update method """
 
-        pk = data.get("id", None)
-        if pk is None:
-            raise DAOException("Update error, id field not found")
+        data["id"] = pk
 
         model = self.read_one_nested(transaction, pk)
         for field in self._updatable_fields:
             setattr(model, field, data.get(field, None))
 
         transaction.add(model)
+
+        return model
 
     def delete_nested(self, transaction: Session, pk):
         """ Nested delete method """
@@ -93,19 +100,40 @@ class BaseDAO:
         return True
 
     def create(self, data):
+        """ Create method """
         with self as transaction:
-            self.create_nested(transaction, data)
-            self.commit_nested()
+            model = self.create_nested(transaction, data)
+            self.commit_nested(transaction)
+
+        return model
 
     def read_all(self, query=None, offset: int or None = None, limit: int or None = None):
+        """ Read all method """
         with self as transaction:
             data = self.read_all_nested(query, transaction, limit, offset)
 
         return data
 
-    def read_one(self, pk):
+    def read_one(self, pk: int):
+        """ Read one method """
         with self as transaction:
             data = self.read_one_nested(transaction, pk)
+
+        return data
+
+    def update(self, pk: int, data: dict):
+        """ Update method """
+        with self as transaction:
+            model = self.update_nested(transaction, pk, data)
+            self.commit_nested(transaction)
+
+        return model
+
+    def delete(self, pk: int):
+        """ Delete method """
+        with self as transaction:
+            self.delete_nested(transaction, pk)
+            self.commit_nested(transaction)
 
 
 class DAOException(Exception):
