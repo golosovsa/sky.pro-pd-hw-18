@@ -3,7 +3,6 @@
 """
 
 from sqlalchemy.orm import Session, Query
-from sqlalchemy.exc import SQLAlchemyError
 
 
 class BaseDAO:
@@ -14,6 +13,10 @@ class BaseDAO:
         self._session: Session = session
         self._nested_session: Session or None = None
         self._updatable_fields = []
+
+    @property
+    def fields(self):
+        return self._updatable_fields
 
     @staticmethod
     def logger(exc_type, exc_val, exc_tb):
@@ -37,7 +40,7 @@ class BaseDAO:
 
     def read_all_nested(self,
                         transaction: Session,
-                        query: Query,
+                        query: Query or None = None,
                         limit: int or None = None,
                         offset: int or None = None):
         """ Nested read all models method """
@@ -56,22 +59,13 @@ class BaseDAO:
         query: Query = self.get_query(transaction)
         return query.get(pk)
 
-    def update_nested(self, transaction: Session, pk: int, data: dict):
+    def update_nested(self, transaction: Session, model):
         """ Nested update method """
-
-        data["id"] = pk
-
-        model = self.read_one_nested(transaction, pk)
-        for field in self._updatable_fields:
-            setattr(model, field, data.get(field, None))
-
         transaction.add(model)
-
         return model
 
-    def delete_nested(self, transaction: Session, pk):
+    def delete_nested(self, transaction: Session, model):
         """ Nested delete method """
-        model = self.read_one_nested(transaction, pk)
         transaction.delete(model)
 
     def __enter__(self):
@@ -107,10 +101,10 @@ class BaseDAO:
 
         return model
 
-    def read_all(self, query=None, offset: int or None = None, limit: int or None = None):
+    def read_all(self, offset: int or None = None, limit: int or None = None):
         """ Read all method """
         with self as transaction:
-            data = self.read_all_nested(query, transaction, limit, offset)
+            data = self.read_all_nested(transaction, None, limit, offset)
 
         return data
 
@@ -121,22 +115,23 @@ class BaseDAO:
 
         return data
 
-    def update(self, pk: int, data: dict):
+    def update(self, model):
         """ Update method """
         with self as transaction:
-            model = self.update_nested(transaction, pk, data)
+            model = self.update_nested(transaction, model)
             self.commit_nested(transaction)
 
         return model
 
-    def delete(self, pk: int):
+    def delete(self, model):
         """ Delete method """
         with self as transaction:
-            self.delete_nested(transaction, pk)
+            self.delete_nested(transaction, model)
             self.commit_nested(transaction)
 
 
 class DAOException(Exception):
     """ DAO exception """
+
     def __init__(self, message):
         super().__init__(message)

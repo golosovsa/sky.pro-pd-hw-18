@@ -5,6 +5,7 @@ from sqlalchemy.orm import Query, Session
 
 from .base_dao import BaseDAO
 from .model.movie import Movie
+from app.constants import EPSILON
 
 
 class MovieDAO(BaseDAO):
@@ -49,17 +50,56 @@ class MovieDAO(BaseDAO):
     def filter_by_genre(self, genre_id: int, limit: int or None = None, offset: int or None = None):
         return self.filter_by_genre_nested(self._session, genre_id, limit=limit, offset=offset)
 
+    def filter_by_title_nested(self,
+                               transaction: Session,
+                               title: str,
+                               query: Query or None = None,
+                               limit: int or None = None,
+                               offset: int or None = None):
+        query: Query = query or self.get_query(transaction)
+        query: Query = query.filter(Movie.title.like(f"%{title}%"))
+        return self.read_all_nested(transaction, query, limit, offset)
 
-movies_dao = MovieDAO(None)
-directors_dao = MovieDAO(None)
-genres_dao = MovieDAO(None)
+    def filter_by_title(self, title: str, limit: int or None = None, offset: int or None = None):
+        return self.filter_by_title_nested(self._session, title, limit=limit, offset=offset)
 
-class Test:
-    def test(self, data):
-        with movies_dao as transaction:
-            director = directors_dao.create_nested(transaction, data["director"])
-            genre = genres_dao.create_nested(transaction, data["genre"])
-            data["movie"]["director_id"] = director.id
-            data["movie"]["genre_id"] = genre.id
-            movie = movies_dao.create_nested(transaction, data["movie"])
-            movies_dao.commit_nested(transaction)
+    def filter_by_description_nested(self,
+                                     transaction: Session,
+                                     description: str,
+                                     query: Query or None = None,
+                                     limit: int or None = None,
+                                     offset: int or None = None):
+        query: Query = query or self.get_query(transaction)
+        query: Query = query.filter(Movie.description.like(f"%{description}%"))
+        return self.read_all_nested(transaction, query, limit, offset)
+
+    def filter_by_description(self, description: str, limit: int or None = None, offset: int or None = None):
+        return self.filter_by_description_nested(self._session, description, limit=limit, offset=offset)
+
+    def filter_by_year_nested(self,
+                              transaction: Session,
+                              year: int,
+                              query: Query or None = None,
+                              limit: int or None = None,
+                              offset: int or None = None):
+        query: Query = query or self.get_query(transaction)
+        query: Query = query.filter(Movie.year == year)
+        return self.read_all_nested(transaction, query, limit, offset)
+
+    def filter_by_year(self, year: int, limit: int or None = None, offset: int or None = None):
+        return self.filter_by_year_nested(self._session, year, limit=limit, offset=offset)
+
+    def filter_by_rating_nested(self,
+                                transaction: Session,
+                                rating: float,
+                                query: Query or None = None,
+                                limit: int or None = None,
+                                offset: int or None = None):
+        query: Query = query or self.get_query(transaction)
+        query: Query = query.filter(rating - EPSILON < Movie.rating, rating + EPSILON > Movie.rating)
+        return self.read_all_nested(transaction, query, limit, offset)
+
+    def filter_by_rating(self, rating: float, limit: int or None = None, offset: int or None = None):
+        return self.filter_by_rating_nested(self._session, rating, limit=limit, offset=offset)
+
+

@@ -6,6 +6,8 @@
 # CONSTANT_NAME = "value"
 # LOG_DIR = "logs"
 
+EPSILON = 0.001
+
 TEST_MOVIES = [
     {
         "title": "The Shawshank Redemption",
