@@ -1,7 +1,7 @@
 """
     DAO abstraction level for movie
 """
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, SessionTransaction
 
 from .base_dao import BaseDAO
 from .model.movie import Movie
@@ -24,7 +24,7 @@ class MovieDAO(BaseDAO):
         ]
 
     def filter_by_director_nested(self,
-                                  transaction: Session,
+                                  transaction: SessionTransaction or None,
                                   director_id: int,
                                   query: Query or None = None,
                                   limit: int or None = None,
@@ -34,10 +34,10 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_director(self, director_id: int, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_director_nested(self._session, director_id, limit=limit, offset=offset)
+        return self.filter_by_director_nested(None, director_id, limit=limit, offset=offset)
 
     def filter_by_genre_nested(self,
-                               transaction: Session,
+                               transaction: SessionTransaction or None,
                                genre_id: int,
                                query: Query or None = None,
                                limit: int or None = None,
@@ -48,10 +48,10 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_genre(self, genre_id: int, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_genre_nested(self._session, genre_id, limit=limit, offset=offset)
+        return self.filter_by_genre_nested(None, genre_id, limit=limit, offset=offset)
 
     def filter_by_title_nested(self,
-                               transaction: Session,
+                               transaction: SessionTransaction or None,
                                title: str,
                                query: Query or None = None,
                                limit: int or None = None,
@@ -61,10 +61,10 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_title(self, title: str, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_title_nested(self._session, title, limit=limit, offset=offset)
+        return self.filter_by_title_nested(None, title, limit=limit, offset=offset)
 
     def filter_by_description_nested(self,
-                                     transaction: Session,
+                                     transaction: SessionTransaction or None,
                                      description: str,
                                      query: Query or None = None,
                                      limit: int or None = None,
@@ -74,10 +74,10 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_description(self, description: str, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_description_nested(self._session, description, limit=limit, offset=offset)
+        return self.filter_by_description_nested(None, description, limit=limit, offset=offset)
 
     def filter_by_year_nested(self,
-                              transaction: Session,
+                              transaction: SessionTransaction or None,
                               year: int,
                               query: Query or None = None,
                               limit: int or None = None,
@@ -87,10 +87,10 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_year(self, year: int, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_year_nested(self._session, year, limit=limit, offset=offset)
+        return self.filter_by_year_nested(None, year, limit=limit, offset=offset)
 
     def filter_by_rating_nested(self,
-                                transaction: Session,
+                                transaction: SessionTransaction or None,
                                 rating: float,
                                 query: Query or None = None,
                                 limit: int or None = None,
@@ -100,6 +100,6 @@ class MovieDAO(BaseDAO):
         return self.read_all_nested(transaction, query, limit, offset)
 
     def filter_by_rating(self, rating: float, limit: int or None = None, offset: int or None = None):
-        return self.filter_by_rating_nested(self._session, rating, limit=limit, offset=offset)
+        return self.filter_by_rating_nested(None, rating, limit=limit, offset=offset)
 
 

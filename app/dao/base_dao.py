@@ -2,7 +2,7 @@
     Base DAO class
 """
 
-from sqlalchemy.orm import Session, Query
+from sqlalchemy.orm import Session, Query, SessionTransaction
 
 
 class BaseDAO:
@@ -23,23 +23,23 @@ class BaseDAO:
         """ Logger errors DAO abstraction level """
         pass
 
-    def get_query(self, transaction=None) -> Query:
+    def get_query(self, transaction: SessionTransaction or None = None) -> Query:
         """ Get new query object """
-        return self._session.query(self._Model) if not transaction else transaction.query(self._Model)
+        return self._session.query(self._Model) if not transaction else transaction.session.query(self._Model)
 
-    def commit_nested(self, transaction: Session = None):
+    def commit_nested(self, transaction: SessionTransaction or None = None):
         """ Nested commit method """
         transaction = transaction or self._nested_session
         transaction.commit()
 
-    def create_nested(self, transaction: Session, data: dict):
+    def create_nested(self, transaction: SessionTransaction, data: dict):
         """ Nested create model method """
         model = self._Model(**data)
-        transaction.add(model)
+        transaction.session.add(model)
         return model
 
     def read_all_nested(self,
-                        transaction: Session,
+                        transaction: SessionTransaction,
                         query: Query or None = None,
                         limit: int or None = None,
                         offset: int or None = None):
@@ -54,19 +54,19 @@ class BaseDAO:
 
         return query.all()
 
-    def read_one_nested(self, transaction: Session, pk: int):
+    def read_one_nested(self, transaction: SessionTransaction, pk: int):
         """ Nested read one method """
         query: Query = self.get_query(transaction)
         return query.get(pk)
 
     def update_nested(self, transaction: Session, model):
         """ Nested update method """
-        transaction.add(model)
+        transaction.session.add(model)
         return model
 
-    def delete_nested(self, transaction: Session, model):
+    def delete_nested(self, transaction: SessionTransaction, model):
         """ Nested delete method """
-        transaction.delete(model)
+        transaction.session.delete(model)
 
     def __enter__(self):
         """ Start nested transaction """
@@ -78,17 +78,17 @@ class BaseDAO:
         if exc_type:
             self._nested_session.rollback()
             self.logger(exc_type, exc_val, exc_tb)
-            self._nested_session.close()
             self._nested_session = None
             raise DAOException("Something went wrong at the DAO abstraction layer")
 
-        if len(self._nested_session.new) or len(self._nested_session.deleted) or len(self._nested_session.dirty):
+        if \
+                len(self._nested_session.session.new) or \
+                len(self._nested_session.session.deleted) or \
+                len(self._nested_session.session.dirty):
             self._nested_session.rollback()
-            self._nested_session.close()
             self._nested_session = None
             raise DAOException("Commit pending but not executed")
 
-        self._nested_session.close()
         self._nested_session = None
 
         return True

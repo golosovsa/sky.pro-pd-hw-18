@@ -9,3 +9,5 @@ class GenreService(BaseService):
     def __init__(self, dao):
         super(GenreService, self).__init__(dao)
 
+
+
