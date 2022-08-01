@@ -8,7 +8,8 @@ from app.dao.base_dao import BaseDAO
 
 class ServiceException(Exception):
     """ Service exception """
-    def __init__(self, message):
+    def __init__(self, message, code=500):
+        self.code = code
         super().__init__(message)
 
 
@@ -68,6 +69,7 @@ class BaseService:
         """ Delete method """
         with self:
             model = self._dao.read_one(pk)
-            self._dao.delete(model)
+            if model:
+                self._dao.delete(model)
 
 

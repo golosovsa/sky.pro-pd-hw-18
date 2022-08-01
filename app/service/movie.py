@@ -16,7 +16,7 @@ class MovieService(BaseService):
             return type_of(extra)
         except ValueError as exception:
             self.logger(ValueError, exception, None)
-            raise ServiceException("Extra key error during type casting, invalid extra key")
+            raise ServiceException("Extra key error during type casting, invalid extra key", code=400)
 
     def read_all(self,
                  limit: int or None = None,

@@ -5,9 +5,11 @@
 
 from flask_restx import Namespace, Resource, fields
 from flask import request
+from werkzeug.exceptions import InternalServerError, NotFound
 
 from app.dao.model.movie import MovieSchema
 from app.service_container import movie_service
+from app.service.base_service import ServiceException
 
 movies_ns = Namespace("movies", description="API route for movie entities")
 
@@ -71,7 +73,13 @@ class MoviesView(Resource):
         filter_by = args.get("filter_by")
         extra = args.get("extra")
 
-        movie = movie_service.read_all(limit=limit, offset=offset, filter_by=filter_by, extra=extra)
+        try:
+            movie = movie_service.read_all(limit=limit, offset=offset, filter_by=filter_by, extra=extra)
+        except ServiceException as service_exception:
+            if service_exception.code == 500:
+                raise InternalServerError()
+            else:
+                raise NotFound("Bad parameters")
 
         return movies_schema.dump(movie), 200
 
@@ -79,7 +87,16 @@ class MoviesView(Resource):
     @movies_ns.expect(movie_entity_fields)
     def post(self):
         data = request.json
-        movie = movie_service.create(data)
+
+        try:
+            movie = movie_service.create(data)
+
+        except ServiceException as service_exception:
+            if service_exception.code == 500:
+                raise InternalServerError()
+            else:
+                raise NotFound("Bad json")
+
         return {}, 201, {"location": f"/movies/{movie.id}"}
 
 
@@ -96,7 +113,15 @@ class MovieView(Resource):
     @movies_ns.expect(movie_entity_fields)
     def put(self, pk):
         data = request.json
-        movie_service.update(pk, data)
+        try:
+            movie_service.update(pk, data)
+
+        except ServiceException as service_exception:
+            if service_exception.code == 500:
+                raise InternalServerError()
+            else:
+                raise NotFound("Bad json")
+
         return {}, 201, {"location": f"/movies/{pk}"}
 
     @movies_ns.doc(description="Delete movie by id")
