@@ -81,7 +81,8 @@ class BaseDAO:
             self._nested_session = None
             raise DAOException("Something went wrong at the DAO abstraction layer")
 
-        self._session.commit()
+        if self._session.in_nested_transaction():
+            self._session.commit()
         self._nested_session = None
 
         return True
