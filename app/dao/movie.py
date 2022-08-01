@@ -101,5 +101,3 @@ class MovieDAO(BaseDAO):
 
     def filter_by_rating(self, rating: float, limit: int or None = None, offset: int or None = None):
         return self.filter_by_rating_nested(None, rating, limit=limit, offset=offset)
-
-

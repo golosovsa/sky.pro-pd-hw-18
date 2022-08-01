@@ -81,14 +81,7 @@ class BaseDAO:
             self._nested_session = None
             raise DAOException("Something went wrong at the DAO abstraction layer")
 
-        if \
-                len(self._nested_session.session.new) or \
-                len(self._nested_session.session.deleted) or \
-                len(self._nested_session.session.dirty):
-            self._nested_session.rollback()
-            self._nested_session = None
-            raise DAOException("Commit pending but not executed")
-
+        self._session.commit()
         self._nested_session = None
 
         return True
